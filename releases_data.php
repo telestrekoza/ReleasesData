@@ -1,7 +1,7 @@
 <?php
 /*
 Ajax : Releases Data
-Version: 2.5.18
+Version: 2.5.19
 */
 define('DOING_AJAX', true);
 $root = dirname(dirname(__FILE__));
@@ -137,7 +137,7 @@ function getAllFavorite() {
 function getFeeds() {
     global $wpdb;
 
-    $rows =& $wpdb->get_results($wpdb->prepare("SELECT t1.*, (SELECT COUNT(1) FROM `".$wpdb->prefix."lifestream_event` WHERE `feed_id` = t1.`id`) as `events` FROM `".$wpdb->prefix."lifestream_feeds` as t1 ORDER BY `id` "));
+    $rows =& $wpdb->get_results("SELECT t1.*, (SELECT COUNT(1) FROM `".$wpdb->prefix."lifestream_event` WHERE `feed_id` = t1.`id`) as `events` FROM `".$wpdb->prefix."lifestream_feeds` as t1 ORDER BY `id` ");
 
     $results = array();
     foreach ($rows as $result) {
