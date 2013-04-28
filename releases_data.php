@@ -1,7 +1,7 @@
 <?php
 /*
 Ajax : Releases Data
-Version: 2.5.19
+Version: 2.5.20
 */
 define('DOING_AJAX', true);
 $root = dirname(dirname(__FILE__));
@@ -438,7 +438,14 @@ function parseEventData($result, $logined) {
 	    if(isset($data) && substr_count($result->data[0]["link"], "ivnet-cinema") > 0 )
 		$result_data = print_ivnet($result, $data, $logined);
 	}
-	
+	elseif($result->feed->options["feed_label"] == "AlexFilm") {
+	    //$data = explode( " / ",$result->data[0]["title"]);
+	    $data = $result->data[0]["title"];
+	    //var_dump($data);
+	    if(isset($data))
+		$result_data = print_alexfilm($result, $data, $logined);
+	}
+
 
 	return $result_data;
 }
@@ -1492,6 +1499,74 @@ function print_ivnet($result, $data, $logined) {
     $ret_result[1]["releaseGroup"] = 'IvnetCinema';
 
     $ret_result[1]["link"] = $url;//urldecode($result->data[0]["link"]);
+    $ret_result[1]["episodeTitle"] = $episodeTitle;
+    if(isset($show_det))
+	$ret_result[1]["episodeTitle"] .= ' ( <small>'. $show_det.'</small> )';
+    $ret_result[1]["extendedTitle"] = $title_ru;
+    $ret_result[0] = $title;
+    if(isset($season) && isset($episode) && isset($episode_end)) {
+	$ret_result[1]["showNumber"] = '(S'.str_pad((int)$season,2,"0",STR_PAD_LEFT).'E'.str_pad((int)$episode,2,"0",STR_PAD_LEFT).'-'.str_pad((int)$episode_end,2,"0",STR_PAD_LEFT).')';
+    } elseif(isset($season) && isset($episode)) {
+	$ret_result[1]["showNumber"] = '(S'.str_pad((int)$season,2,"0",STR_PAD_LEFT).'E'.str_pad((int)$episode,2,"0",STR_PAD_LEFT).')';
+    } elseif(isset($season) && !isset($episode)) {
+	$ret_result[1]["showNumber"] = '(S'.str_pad((int)$season,2,"0",STR_PAD_LEFT).')';
+    }
+
+    return $ret_result;
+}
+
+function print_alexfilm($result, $data, $logined) {
+    global $img_path,$title_width,$alexfilm_down_url;
+    $ret_result = array();
+    //eliminate dupps
+    $down_url = $result->data[0]["guid"];
+    if($alexfilm_down_url == $down_url)
+        return;
+    $alexfilm_down_url = $down_url;
+    //echo "<!- debug2: ";var_dump($result); echo "-->";
+    //var_dump($data);
+    //return;
+//    if(preg_match('/^(?<show_title_ru>.*) \/ (?<show_title>.*) \/ (?<show_season>.*) \/ (?<show_episod>.*)([a-zA-Z]?-(?<show_episod_finish>\d+))? (?<episode_options>[^\/]*)?(\"(?<episode_title>[^\/]*)\")(?<show_details>.*)?$/', $data, $values)) {
+    if(preg_match('/^(?<show_title_ru>.*) \/ (?<show_title>.*) \/ .* (?<show_season>\d+) \/ .* (?<show_episod>\d+)(-(?<show_episod_finish>\d+)(.\d+)?)? (?<episode_options>.*)$/', $data, $values)) {
+	    $season = $values["show_season"];
+	    $episode = $values["show_episod"];
+	    if(trim($values["show_episod_finish"]) != "")
+		$episode_end = trim($values["show_episod_finish"]);
+	    if(trim($values["show_details"]) != "")
+		$show_det = trim($values["show_details"]);
+	    $title_ru = trim($values["show_title_ru"]);
+	    $title = trim($values["show_title"]);
+	    $episodeTitle = trim($values["episode_title"]);
+	    $feature = trim($values["episode_options"]);
+	    //var_dump($values);
+	    //return;
+    } else {
+
+	//var_dump($data);
+	return;
+    }
+    if( $logined ) {
+	$ret_result[1]["downloadLink"] = urldecode($result->data[0]["link"]);
+    }
+
+    if(preg_match('/720p/', $feature))
+	$ret_result[1]["features"] .= '720p';
+    elseif(preg_match('/1080p/', $feature))
+	$ret_result[1]["features"] .= '1080p';
+    elseif(preg_match('/HDTVRip/', $feature))
+	$ret_result[1]["features"] .= "HDTV,";
+    elseif(preg_match('/WEB-DLRip/', $feature))
+	$ret_result[1]["features"] .= "HDRip,";
+
+    $ret_result[1]["releaseGroup"] = 'AlexFilm';
+    
+    if(preg_match('/(?<url>http[^\>]*)/', $result->data[0]["description"], $values)) {
+	$url = urldecode($values["url"]);
+    } else {
+	$url = $down_url;
+    }
+
+    $ret_result[1]["link"] = $url;
     $ret_result[1]["episodeTitle"] = $episodeTitle;
     if(isset($show_det))
 	$ret_result[1]["episodeTitle"] .= ' ( <small>'. $show_det.'</small> )';
