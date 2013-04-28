@@ -551,7 +551,7 @@ function print_novafilm($result, $data, $logined) {
 
     //var_dump($data[1]);
     if(preg_match("/\"(?<episode>.*)\"/", $data[1], $info))
-	$ret_result[1]["episodeTitle"] = $info["episode"];
+	$ret_result[1]["episodeTitle"] = htmlentities($info["episode"]);
     
     if(preg_match("/.?Preview#(?<episode>\d+).?/", $data[1], $info))
 	$ret_result[1]["showNumber"] = "епизод ".$info["episode"];
@@ -575,7 +575,7 @@ function print_novafilm($result, $data, $logined) {
 	$ret_result[1]["extendedTitle"] = $title["ru"];
     }
     if(!empty($mytitle))
-        $ret_result[1]["episodeTitle"] = $mytitle;
+        $ret_result[1]["episodeTitle"] = htmlentities($mytitle);
     return $ret_result;
 }
 
@@ -1068,8 +1068,9 @@ function print_newstudio($result, $data, $logined) {
     } else {
 	$ret_result[1]["link"] = "http://newstudio.tv";
     }
-    $ret_result[1]["extendedTitle"] = $title_ru;
-    $ret_result[0] = $title;
+    $ret_result[1]["extendedTitle"] = htmlentities($title_ru);
+    //$ret_result[0] = htmlentities($title_ru);
+    $ret_result[0] = preg_replace('/\x3/', '', htmlspecialchars(utf8_decode($title), ENT_QUOTES));
     if(isset($season) && isset($episode)) {
 	$ret_result[1]["showNumber"] = '(S'.str_pad((int)$season,2,"0",STR_PAD_LEFT).'E'.str_pad((int)$episode,2,"0",STR_PAD_LEFT);
 	if(isset($season_end) && isset($episode_end))
